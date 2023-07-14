@@ -7,8 +7,13 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.14.7
 kernelspec:
+  argv: [python, -m, ipykernel_launcher, -f, '{connection_file}']
   display_name: Python 3 (ipykernel)
+  env: null
+  interrupt_mode: signal
   language: python
+  metadata:
+    debugger: true
   name: python3
 ---
 
@@ -21,14 +26,14 @@ import numpy as np
 import json
 
 # number of peers to crash
-n = 1
-dataDir = "../../quantas/results/pBFT/d10/r1000/p100/"
+n = 33
+dataDir = "../../quantas/results/pBFT/d10/r400/p100/"
 
 correct  = json.load(open(f"{dataDir}i00t.json"))
 infected = json.load(open(f"{dataDir}i{n:02}t.json"))
 
-correctLatency  = np.array(list(map(lambda x: x['latency'],  correct['tests'])), dtype=np.float64)
-infectedLatency = np.array(list(map(lambda x: x['latency'], infected['tests'])), dtype=np.float64)
+correctLatency  = np.array(list(map(lambda x: x['throughput'],  correct['tests'])), dtype=np.float64)
+infectedLatency = np.array(list(map(lambda x: x['throughput'], infected['tests'])), dtype=np.float64)
 
 # averages and standard deviations, ignoring None
 correctLatencyAvg  = np.nanmean( correctLatency, axis=0)
@@ -67,7 +72,7 @@ with plt.style.context('science'):
     plt.legend(handles=[uninAvg[0], crshAvg[0]], mode="expand")
 
     plt.xlabel('Round')
-    plt.ylabel('Cumulative average latency (rounds)')
+    plt.ylabel('Cumulative throughput (commits)')
     plt.title(f'pBFT latency with {n}/100 peers crashing at round 200')
     # add gridlines every 1
     plt.grid(True, axis='y')
