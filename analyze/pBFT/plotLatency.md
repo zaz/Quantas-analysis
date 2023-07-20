@@ -24,56 +24,44 @@ import matplotlib.pyplot as plt
 import scienceplots  # scientific themes for matplotlib
 import numpy as np
 import json
-
-# number of peers to crash
-n = 33
+n = 32  # number of peers to crash
 dataDir = "../../quantas/results/pBFT/d10/r400/p100/"
 
-correct  = json.load(open(f"{dataDir}i00t.json"))
-infected = json.load(open(f"{dataDir}i{n:02}t.json"))
+nTests = len(json.load(open(f"{dataDir}i{n:02}e{e:02}.json"))['tests'])
 
-correctLatency  = np.array(list(map(lambda x: x['throughput'],  correct['tests'])), dtype=np.float64)
-infectedLatency = np.array(list(map(lambda x: x['throughput'], infected['tests'])), dtype=np.float64)
+equivocate = np.empty([21, nTests])
+equivocateAvg = np.empty([21])
+equivocateStd = np.empty([21])
+equivocateX = np.empty([21])  # x axis
 
-# averages and standard deviations, ignoring None
-correctLatencyAvg  = np.nanmean( correctLatency, axis=0)
-correctLatencyStd  = np.nanstd(  correctLatency, axis=0)
-infectedLatencyAvg = np.nanmean(infectedLatency, axis=0)
-infectedLatencyStd = np.nanstd( infectedLatency, axis=0)
+for e in range(0, 21):
+    tests = json.load(open(f"{dataDir}i{n:02}e{5*e:02}.json"))['tests']
 
-# create an array for the x axis. A range from 0 to ...
-x = np.arange(0, len(correctLatency[0]))
+    equivocate[e] = np.array(list(map(
+        lambda t: tests[t]['throughput'][-1]-tests[t]['throughput'][200],
+                range(0, len(tests)))), dtype=np.float64)
+
+    equivocateX[e] = 100-e*5
+
+equivocateAvg = np.average(equivocate, axis=1)
+equivocateStd = np.std(equivocate, axis=1)
 
 with plt.style.context('science'):
     fig, ax = plt.subplots()
 
-    unin =  plt.plot(x, correctLatency.T, ':', color='blue', alpha=.035,
-                     label='Uninfected')
-    uninAvg = plt.plot(x, correctLatencyAvg.T, color='blue', linewidth=3,
-                       label='Uninfected average')
+    equiv =  plt.plot(equivocateX, equivocateAvg, color='black', 
+                     label='Equivocating')
     # shade the 95% confidence interval
-    plt.fill_between(x,
-                     correctLatencyAvg.T-1.96*correctLatencyStd.T,
-                     correctLatencyAvg.T+2*correctLatencyStd.T,
-                     linestyle='',   color='blue', linewidth=3, alpha=.2,
-                     label='Uninfected 95% error')
+    plt.fill_between(equivocateX,
+                     equivocateAvg-1.96*equivocateStd,
+                     equivocateAvg+1.96*equivocateStd,
+                     linestyle='',   color='red', alpha=.2,
+                     label='Equivocating 95% error')
 
-    crsh =  plt.plot(x, infectedLatency.T, ':', color='red', alpha=.035,
-                     label='Crashing')
-    crshAvg = plt.plot(x, infectedLatencyAvg.T, color='red', linewidth=3,
-                       label='Crashing average')
-    # shade the 95% confidence interval
-    plt.fill_between(x,
-                     infectedLatencyAvg.T-1.96*infectedLatencyStd.T,
-                     infectedLatencyAvg.T+2*infectedLatencyStd.T,
-                     linestyle='',   color='red', linewidth=3, alpha=.2,
-                     label='Crashing 95% error')
 
-    plt.legend(handles=[uninAvg[0], crshAvg[0]], mode="expand")
-
-    plt.xlabel('Round')
-    plt.ylabel('Cumulative throughput (commits)')
-    plt.title(f'pBFT latency with {n}/100 peers crashing at round 200')
+    plt.xlabel('Degree of equivocation (\%)')
+    plt.ylabel('Throughput (commits/200 rounds)')
+    plt.title(f'pBFT throughput with {n}/100 peers equivocating')
     # add gridlines every 1
     plt.grid(True, axis='y')
     # set the gap between the left axis and the data to zero
@@ -81,7 +69,7 @@ with plt.style.context('science'):
     # make plot bigger
     plt.gcf().set_size_inches(10, 5)
 
-    plt.savefig(f"{dataDir}i{n:02}t.svg")
-    plt.savefig(f"{dataDir}i{n:02}t.png", dpi=300)
+    plt.savefig(f"{dataDir}i{n:02}equivocating.svg")
+    plt.savefig(f"{dataDir}i{n:02}equivocating.png", dpi=300)
     plt.show()
 ```
