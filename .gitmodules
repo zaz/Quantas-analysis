@@ -1,0 +1,3 @@
+[submodule "quantas"]
+	path = quantas
+	url = https://github.com/zaz/quantas
