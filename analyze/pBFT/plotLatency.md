@@ -24,90 +24,45 @@ import matplotlib.pyplot as plt
 import scienceplots  # scientific themes for matplotlib
 import numpy as np
 import json
-n = 32  # number of peers to crash
-dataDir = "../../quantas/results/pBFT/d1/r1000/p100/"
+e = 55  # degree to which infected nodes equivocate
+dataDir = "../../quantas/results/pBFT/d5/r1000/p100/"
 
-nTests = len(json.load(open(f"{dataDir}i{n:02}e00.json"))['tests'])
+nTests = len(json.load(open(f"{dataDir}i00e55.json"))['tests'])
 
 equivocateX = np.empty([21])  # x axis
 
-equivocateD1 = np.empty([21, nTests])
-equivocateD1Avg = np.empty([21])
-equivocateD1Std = np.empty([21])
+equivocate = np.empty([21, nTests])
+equivocateAvg = np.empty([21])
+equivocateStd = np.empty([21])
 
-for e in range(0, 21):
-    tests = json.load(open(f"{dataDir}i{n:02}e{5*e:02}.json"))['tests']
+for n in range(0, 21):
+    tests = json.load(open(f"{dataDir}i{5*n:02}e{e:02}.json"))['tests']
 
-    equivocateD1[e] = np.array(list(map(
-        lambda t: 1000/tests[t]['throughput'][-1],
+    equivocate[n] = np.array(list(map(
+        # lambda t: 1000/max(tests[t]['throughput'][-1], 100),
+        lambda t: tests[t]['throughput'][-1],
                 range(0, len(tests)))), dtype=np.float64)
 
-    equivocateX[e] = 100-e*5
+    equivocateX[n] = n*5
 
-equivocateD1Avg = np.average(equivocateD1, axis=1)
-equivocateD1Std = np.std(equivocateD1, axis=1)
-
-
-equivocateD5 = np.empty([21, nTests])
-equivocateD5Avg = np.empty([21])
-equivocateD5Std = np.empty([21])
-
-dataDir = "../../quantas/results/pBFT/d5/r1000/p100/"
-for e in range(0, 21):
-    tests = json.load(open(f"{dataDir}i{n:02}e{5*e:02}.json"))['tests']
-
-    equivocateD5[e] = np.array(list(map(
-        lambda t: 1000/tests[t]['throughput'][-1],
-                range(0, len(tests)))), dtype=np.float64)
-
-equivocateD5Avg = np.average(equivocateD5, axis=1)
-equivocateD5Std = np.std(equivocateD5, axis=1)
-
-
-equivocateD10 = np.empty([21, nTests])
-equivocateD10Avg = np.empty([21])
-equivocateD10Std = np.empty([21])
-
-dataDir = "../../quantas/results/pBFT/d10/r1000/p100/"
-for e in range(0, 21):
-    tests = json.load(open(f"{dataDir}i{n:02}e{5*e:02}.json"))['tests']
-
-    equivocateD10[e] = np.array(list(map(
-        lambda t: 1000/tests[t]['throughput'][-1],
-                range(0, len(tests)))), dtype=np.float64)
-
-equivocateD10Avg = np.average(equivocateD10, axis=1)
-equivocateD10Std = np.std(equivocateD10, axis=1)
+equivocateAvg = np.average(equivocate, axis=1)
+equivocateStd = np.std(equivocate, axis=1)
 
 with plt.style.context('science'):
     fig, ax = plt.subplots()
 
-    plt.plot(equivocateX, equivocateD1Avg, color='black', label='delay 1')
+    plt.plot(equivocateX, equivocateAvg, color='blue', label='delay 5')
     # shade the 95% confidence interval
     plt.fill_between(equivocateX,
-                     equivocateD1Avg-1.96*equivocateD1Std,
-                     equivocateD1Avg+1.96*equivocateD1Std,
-                     linestyle='', color='black', alpha=.2)
-
-    plt.plot(equivocateX, equivocateD5Avg, color='blue', label='delay 5')
-    # shade the 95% confidence interval
-    plt.fill_between(equivocateX,
-                     equivocateD5Avg-1.96*equivocateD5Std,
-                     equivocateD5Avg+1.96*equivocateD5Std,
+                     equivocateAvg-1.96*equivocateStd,
+                     equivocateAvg+1.96*equivocateStd,
                      linestyle='', color='blue', alpha=.2)
-
-    plt.plot(equivocateX, equivocateD10Avg, color='red', label='delay 10')
-    # shade the 95% confidence interval
-    plt.fill_between(equivocateX,
-                     equivocateD10Avg-1.96*equivocateD10Std,
-                     equivocateD10Avg+1.96*equivocateD10Std,
-                     linestyle='', color='red', alpha=.2)
 
     plt.legend(loc='upper right')
 
-    plt.xlabel('Degree of equivocation (\%)')
-    plt.ylabel('Latency (rounds/commit)')
-    plt.title(f'PBFT latency with {n}/100 peers equivocating')
+    plt.xlabel('Number of peers equivocating')
+    plt.ylabel('Throughput (commits/1000 rounds)')
+    plt.title(f'PBFT latency with peers equivocating with degree 55\%')
     # add gridlines every 1
     plt.grid(True, axis='y')
     # set the gap between the left axis and the data to zero
@@ -115,7 +70,7 @@ with plt.style.context('science'):
     # make plot bigger
     plt.gcf().set_size_inches(10, 5)
 
-    plt.savefig(f"{dataDir}i{n:02}equivocating.svg")
-    plt.savefig(f"{dataDir}i{n:02}equivocating.png", dpi=300)
+    plt.savefig(f"{dataDir}i{n:02}e55.svg")
+    plt.savefig(f"{dataDir}i{n:02}e55.png", dpi=300)
     plt.show()
 ```
